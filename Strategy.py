@@ -46,11 +46,11 @@ class QQStrategy(bt.Strategy):
     def next(self):
         if self.buy_sig:
             self.buy(size=100)
-            self.one_share += 1
+            
 
         if self.dataclose[0] < self.sma5 and self.one_share > 0:
             self.sell(size=100)
-            self.one_share -= 1
+            
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -67,7 +67,7 @@ class QQStrategy(bt.Strategy):
                      order.executed.size,
                      order.executed.value,
                      order.executed.comm))
-
+                self.one_share += 1
                 self.buyprice = order.executed.price
                 self.buycomm = order.executed.comm
             elif order.issell():
@@ -76,6 +76,7 @@ class QQStrategy(bt.Strategy):
                           order.executed.size,
                           order.executed.value,
                           order.executed.comm))
+                self.one_share -= 1
             # 记录当前交易数量
             self.bar_executed = len(self)
 
@@ -139,11 +140,10 @@ class DEMO(bt.Strategy): ## 新策略 copy 這邊過去 撰寫策略
         if self.rsi <= 20:
             self.log('BUY, %.2f' % self.data.close[0])
             self.buy(size=100)
-            self.one_share += 1
+            
         elif self.rsi >= 80 and self.one_share > 0:
             self.log('SELL, %.2f' % self.data.close[0])
             self.sell(size=100)
-            self.one_share -= 1
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -160,7 +160,7 @@ class DEMO(bt.Strategy): ## 新策略 copy 這邊過去 撰寫策略
                      order.executed.size,
                      order.executed.value,
                      order.executed.comm))
-
+                self.one_share += 1
                 self.buyprice = order.executed.price
                 self.buycomm = order.executed.comm
             elif order.issell():
@@ -169,6 +169,7 @@ class DEMO(bt.Strategy): ## 新策略 copy 這邊過去 撰寫策略
                           order.executed.size,
                           order.executed.value,
                           order.executed.comm))
+                self.one_share -= 1
             # 记录当前交易数量
             self.bar_executed = len(self)
 
@@ -237,11 +238,11 @@ class TestStrategy(bt.Strategy): ## 策略
         if self.rsi <= 20:
             self.log('BUY, %.2f' % self.data.close[0])
             self.buy(size=100)
-            self.one_share += 1
+            
         elif self.rsi >= 80 and self.one_share > 0:
             self.log('SELL, %.2f' % self.data.close[0])
             self.sell(size=100)
-            self.one_share -= 1
+
         elif self.rsi >= 80 and self.one_share == 0:
             # print('好時機沒股票賣')
             pass
@@ -261,7 +262,7 @@ class TestStrategy(bt.Strategy): ## 策略
                     (order.executed.price,
                      order.executed.value,
                      order.executed.comm))
-
+                self.one_share += 1
                 self.buyprice = order.executed.price
                 self.buycomm = order.executed.comm
             elif order.issell():
@@ -269,6 +270,7 @@ class TestStrategy(bt.Strategy): ## 策略
                          (order.executed.price,
                           order.executed.value,
                           order.executed.comm))
+                self.one_share -= 1
             # 记录当前交易数量
             self.bar_executed = len(self)
 
@@ -356,7 +358,7 @@ class SmaCross(bt.SignalStrategy): ## 均線交叉策略 怪怪
 class every_mon_five_buy_Strategy(bt.Strategy): ## 策略 每月五號買入
     def __init__(self):
         '''必选，初始化属性、计算指标等'''
-        self._next_buy_date = datetime(2020, 1, 1)
+        self._next_buy_date = datetime(2020, 1, 5)
         self.one_share = 0
         self.start_cash = self.broker.get_cash()
   
@@ -365,7 +367,7 @@ class every_mon_five_buy_Strategy(bt.Strategy): ## 策略 每月五號買入
         if self.data.datetime.date() >= self. _next_buy_date.date():
             self. _next_buy_date += relativedelta(months=1)
             self.buy(size=100) ## 台美股 單位 股 張  要注意
-            self.one_share += 1
+            
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -382,7 +384,7 @@ class every_mon_five_buy_Strategy(bt.Strategy): ## 策略 每月五號買入
                      order.executed.size,
                      order.executed.value,
                      order.executed.comm))
-
+                self.one_share += 1
                 self.buyprice = order.executed.price
                 self.buycomm = order.executed.comm
             elif order.issell():
@@ -391,6 +393,7 @@ class every_mon_five_buy_Strategy(bt.Strategy): ## 策略 每月五號買入
                           order.executed.size,
                           order.executed.value,
                           order.executed.comm))
+                self.one_share -= 1
             # 记录当前交易数量
             self.bar_executed = len(self)
 
@@ -437,7 +440,6 @@ class Black_Triple_Start_Strategy(bt.Strategy): ## 策略 黑色三連星 連收
                 # 买入
                 self.log('BUY, %.2f' % self.data.close[0])
                 self.buy(size=1000)
-                self.one_share += 1
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -454,7 +456,7 @@ class Black_Triple_Start_Strategy(bt.Strategy): ## 策略 黑色三連星 連收
                      order.executed.size,
                      order.executed.value,
                      order.executed.comm))
-
+                self.one_share += 1
                 self.buyprice = order.executed.price
                 self.buycomm = order.executed.comm
             elif order.issell():
@@ -463,6 +465,7 @@ class Black_Triple_Start_Strategy(bt.Strategy): ## 策略 黑色三連星 連收
                           order.executed.size,
                           order.executed.value,
                           order.executed.comm))
+                self.one_share -= 1
             # 记录当前交易数量
             self.bar_executed = len(self)
 
@@ -513,7 +516,6 @@ class buy_sell_demo_Strategy(bt.Strategy): ## 策略 買入後 五個單位後�
                     self.log('买入单, %.2f' % self.dataclose[0])
                      # 跟踪订单避免重复
                     self.order = self.buy(size=1000)
-                    self.one_share += 1
         else:
             # 如果已经持仓，且当前交易数据量在买入后5个单位后
             if len(self) >= (self.bar_executed + 5):
@@ -521,7 +523,6 @@ class buy_sell_demo_Strategy(bt.Strategy): ## 策略 買入後 五個單位後�
                 self.log('卖出单, %.2f' % self.dataclose[0])
                 # 跟踪订单避免重复
                 self.order = self.sell(size=500)
-                self.one_share -= 0.5
 
     # 订单状态通知，买入卖出都是下单
     def notify_order(self, order):
@@ -538,7 +539,7 @@ class buy_sell_demo_Strategy(bt.Strategy): ## 策略 買入後 五個單位後�
                     (order.executed.price,
                      order.executed.value,
                      order.executed.comm))
-
+                self.one_share += 1
                 self.buyprice = order.executed.price
                 self.buycomm = order.executed.comm
             elif order.issell():
@@ -546,6 +547,7 @@ class buy_sell_demo_Strategy(bt.Strategy): ## 策略 買入後 五個單位後�
                          (order.executed.price,
                           order.executed.value,
                           order.executed.comm))
+                self.one_share -= 0.5
             # 记录当前交易数量
             self.bar_executed = len(self)
 
@@ -624,7 +626,7 @@ class fifteenStrategy(bt.Strategy): ## 策略 15日均线交易
                     (order.executed.price,
                      order.executed.value,
                      order.executed.comm))
-
+                self.one_share += 0.5
                 self.buyprice = order.executed.price
                 self.buycomm = order.executed.comm
             elif order.issell():
@@ -632,6 +634,7 @@ class fifteenStrategy(bt.Strategy): ## 策略 15日均线交易
                          (order.executed.price,
                           order.executed.value,
                           order.executed.comm))
+                self.one_share -= 0.5
             # 记录当前交易数量
             self.bar_executed = len(self)
 
@@ -664,7 +667,6 @@ class fifteenStrategy(bt.Strategy): ## 策略 15日均线交易
                 self.log('买入单, %.2f' % self.dataclose[0])
                     # 跟踪订单避免重复
                 self.order = self.buy(size=500)
-                self.one_share += 0.5
         else:
             # 如果已经持仓，收盘价在均线价格之下
             if self.dataclose[0] < self.sma[0]:
@@ -672,7 +674,6 @@ class fifteenStrategy(bt.Strategy): ## 策略 15日均线交易
                 self.log('卖出单, %.2f' % self.dataclose[0])
                 # 跟踪订单避免重复
                 self.order = self.sell(size=500)
-                self.one_share -= 0.5
 
     def stop(self):
         self.roi = (self.broker.get_value() / self.start_cash) - 1.0
@@ -724,7 +725,6 @@ class MACD_buy_KDJ_sell(bt.Strategy): ## 策略
             condition2 = self.macd[0] - self.signal[0]
             if condition1 < 0 and condition2 > 0:
                 self.order = self.buy(size=1000)
-                self.one_share += 1
 
         # else:
             # 卖出：基于KDJ策略
@@ -732,7 +732,6 @@ class MACD_buy_KDJ_sell(bt.Strategy): ## 策略
             condition2 = self.J[0] - self.D[0]
             if (condition1 > 0 and self.one_share > 0) or (condition2 < 0 and self.one_share > 0):
                 self.order = self.sell(size=500)
-                self.one_share -= 1
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -748,7 +747,7 @@ class MACD_buy_KDJ_sell(bt.Strategy): ## 策略
                     (order.executed.price,
                      order.executed.value,
                      order.executed.comm))
-
+                self.one_share += 1
                 self.buyprice = order.executed.price
                 self.buycomm = order.executed.comm
             elif order.issell():
@@ -756,6 +755,7 @@ class MACD_buy_KDJ_sell(bt.Strategy): ## 策略
                          (order.executed.price,
                           order.executed.value,
                           order.executed.comm))
+                self.one_share -= 1
 
             self.bar_executed = len(self)
 
@@ -819,11 +819,9 @@ class MACD_glod_cross(bt.Strategy): ## MACD 黃金交叉
         if self.macd[0] > self.signal[0] and self.macd[-1] <= self.signal[-1]:
             self.log('BUY, %.2f' % self.data.close[0])
             self.buy(size=1000)
-            self.one_share += 1
         elif self.K >= 80 and self.one_share > 0:
             self.log('SELL, %.2f' % self.data.close[0])
             self.sell(size=1000)
-            self.one_share -= 1
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -840,7 +838,7 @@ class MACD_glod_cross(bt.Strategy): ## MACD 黃金交叉
                      order.executed.size,
                      order.executed.value,
                      order.executed.comm))
-
+                self.one_share += 1
                 self.buyprice = order.executed.price
                 self.buycomm = order.executed.comm
             elif order.issell():
@@ -849,6 +847,7 @@ class MACD_glod_cross(bt.Strategy): ## MACD 黃金交叉
                           order.executed.size,
                           order.executed.value,
                           order.executed.comm))
+                self.one_share -= 1
             # 记录当前交易数量
             self.bar_executed = len(self)
 
@@ -917,11 +916,9 @@ class KD_glod_cross(bt.Strategy): ## KD 黃金交叉
             se = int((int(self.broker.get_cash()) / self.data.close[0]) / 2)
             # nornum = 1000
             self.buy(size=se)
-            self.one_share += 1
         elif self.rsi >= 80 and self.one_share > 0:
             self.log('SELL, %.2f' % self.data.close[0])
             self.sell(size=1000)
-            self.one_share -= 1
         else:
             pass
 
@@ -940,7 +937,7 @@ class KD_glod_cross(bt.Strategy): ## KD 黃金交叉
                      order.executed.size,
                      order.executed.value,
                      order.executed.comm))
-
+                self.one_share += 1
                 self.buyprice = order.executed.price
                 self.buycomm = order.executed.comm
             elif order.issell():
@@ -949,6 +946,7 @@ class KD_glod_cross(bt.Strategy): ## KD 黃金交叉
                           order.executed.size,
                           order.executed.value,
                           order.executed.comm))
+                self.one_share -= 1
             # 记录当前交易数量
             self.bar_executed = len(self)
 
@@ -1017,11 +1015,11 @@ class RSI_glod_cross(bt.Strategy): ## RSI 黃金交叉
         if self.rsi5 > self.rsi10 and self.rsi5[-1] <= self.rsi10[-1] and self.rsi5 < 40:
             self.log('BUY, %.2f' % self.data.close[0])
             self.buy(size=1000)
-            self.one_share += 1000
+            
         elif self.rsi5 < self.rsi10 and self.rsi5[-1] >= self.rsi10[-1] and self.rsi5 > 60:
             self.log('SELL, %.2f' % self.data.close[0])
             self.sell(size=1000)
-            self.one_share -= 1000
+            
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -1038,7 +1036,7 @@ class RSI_glod_cross(bt.Strategy): ## RSI 黃金交叉
                      order.executed.size,
                      order.executed.value,
                      order.executed.comm))
-
+                self.one_share += 1000
                 self.buyprice = order.executed.price
                 self.buycomm = order.executed.comm
             elif order.issell():
@@ -1047,6 +1045,7 @@ class RSI_glod_cross(bt.Strategy): ## RSI 黃金交叉
                           order.executed.size,
                           order.executed.value,
                           order.executed.comm))
+                self.one_share -= 1000
             # 记录当前交易数量
             self.bar_executed = len(self)
 
@@ -1069,7 +1068,7 @@ class RSI_glod_cross(bt.Strategy): ## RSI 黃金交叉
     def stop(self):
         self.roi = (self.broker.get_value() / self.start_cash) - 1.0
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
-        print(self.one_share)
+        print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()))
 
 class K_80_20_buy_sell(bt.Strategy): ## 策略 K>80 sell K< 20 buy
     def __init__(self):
@@ -1105,11 +1104,11 @@ class K_80_20_buy_sell(bt.Strategy): ## 策略 K>80 sell K< 20 buy
         if self.rsv <= 20:
             self.log('BUY, %.2f' % self.data.close[0])
             self.buy(size=1000) ## 台股
-            self.one_share += 1
+            
         elif self.rsv >= 80 and self.one_share > 0:
             self.log('SELL, %.2f' % self.data.close[0])
             self.sell(size=1000) ## 台股
-            self.one_share -= 1
+            
         elif self.rsv >= 80 and self.one_share == 0:
             print(' ')
 
@@ -1127,7 +1126,7 @@ class K_80_20_buy_sell(bt.Strategy): ## 策略 K>80 sell K< 20 buy
                     (order.executed.price,
                      order.executed.value,
                      order.executed.comm))
-
+                self.one_share += 1
                 self.buyprice = order.executed.price
                 self.buycomm = order.executed.comm
             elif order.issell():
@@ -1135,6 +1134,7 @@ class K_80_20_buy_sell(bt.Strategy): ## 策略 K>80 sell K< 20 buy
                          (order.executed.price,
                           order.executed.value,
                           order.executed.comm))
+                self.one_share -= 1
             # 记录当前交易数量
             self.bar_executed = len(self)
 
@@ -1157,4 +1157,5 @@ class K_80_20_buy_sell(bt.Strategy): ## 策略 K>80 sell K< 20 buy
     def stop(self):
         self.roi = (self.broker.get_value() / self.start_cash) - 1.0
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
+        print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()))
         # print(self.one_share)
