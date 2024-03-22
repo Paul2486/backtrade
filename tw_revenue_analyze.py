@@ -6,7 +6,8 @@ import yfinance as yf
 # from bs4 import BeautifulSoup as bs
 from lxml import etree,html
 from functools import cache
-from datetime import datetime
+from datetime import datetime,timedelta
+# import datetime
 import backtrader as bt
 from Strategy import *
 
@@ -137,15 +138,11 @@ def dowmload_code_data(year,code):
     time.sleep(10)
 
 def backtrader_strategy(ar,year,month,strategy):
-    if month +6 > 12:
-        month = month -6
-        year = year +1
-    else:
-        month = month +4
-
-    # exit(f"{year} {month}")
-    print(f"\n{year} {month}\n")
-
+    
+    base_bt = datetime.strptime(f'{year}-{month}', "%Y-%m")
+    start_year,start_month = (base_bt + timedelta(days=92)).strftime("%Y-%m").split('-')
+    end_year,end_month = (base_bt + timedelta(days=180)).strftime("%Y-%m").split('-')
+    
     print(f"CODE:{ar}")
     code = ar
     # code = tmp_ar['code']
@@ -160,8 +157,11 @@ def backtrader_strategy(ar,year,month,strategy):
     cerebro.addstrategy(strategy) ## 添加策略 K_80_20_buy_sell(這是策略)
     cerebro.broker.setcommission(commission = 0.1425 / 100) ## 台股手續費
 
-    data0 = bt.feeds.YahooFinanceData(dataname=datasource, fromdate=datetime(year, month, 1),todate=datetime(year, month+2, 30)) ## 確認 可動
-    
+    try:
+        data0 = bt.feeds.YahooFinanceData(dataname=datasource, fromdate=datetime(int(start_year), int(start_month), 1),todate=datetime(int(end_year), int(end_month), 30)) ## 確認 可動
+    except:
+        data0 = bt.feeds.YahooFinanceData(dataname=datasource, fromdate=datetime(int(start_year), int(start_month), 1),todate=datetime(int(end_year), int(end_month), 28)) ## 確認 可動
+
     cerebro.adddata(data0) ## 資料丟入模型
 
     cerebro.run() ## analyzing data
@@ -171,20 +171,27 @@ def backtrader_strategy(ar,year,month,strategy):
 year = int(sys.argv[1]) ## 明國西元年皆可
 month = str(sys.argv[2]) ## 月份 不要補0
 
+# backtrader_strategy('1104',int(year),int(month),K_80_20_buy_sell) ##目標 年 月 策略(K_80_20_buy_sell)
+
 # dl = False
 dl = True
 
-# backtrader_strategy([],int(year),int(month))
-
 ar = analyze_report(year, month)
-
+print("\n\n Enter Backtrader Analyze")
 if dl == True:
+    if int(month) +6 > 12:
+        tmp_year = int(year) +1
+        print(f"**{year}**")
+    else:
+        pass
+
     for tmp_ar in ar:
         print(tmp_ar)
-        if os.path.isfile(f"{tmp_ar}\\{tmp_ar}.TW_2023-01-01_2023-12-31.csv"):
+        
+        if os.path.isfile(f"{tmp_ar}\\{tmp_ar}.TW_{tmp_year}-01-01_{tmp_year}-12-31.csv"):
             pass
         else:
-            dowmload_code_data(year,tmp_ar)
+            dowmload_code_data(tmp_year,tmp_ar)
         # exit("Pause")
 else:
     pass
@@ -192,8 +199,6 @@ else:
 ## 有目標清單 資料 後面有兩條路 
 #A 直接讀 csv 看趨勢 B
 #B backtrade 直接回測績效
-
-#
 
 for tmp_ar in ar:
 
