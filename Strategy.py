@@ -14,6 +14,27 @@ class QQStrategy(bt.Strategy):
         self.one_share = 0 #股票数量
         self.start_cash = self.broker.get_cash()
 
+        self.sma5 = btind.SimpleMovingAverage(period=5) # 5日均线
+        self.sma10 = btind.SimpleMovingAverage(period=10) # 10日均线
+        # bt.And 中所有条件都满足时返回 1；有一个条件不满足就返回 0
+        self.And = bt.And(self.data>self.sma5, self.data>self.sma10, self.sma5>self.sma10)
+        # bt.Or 中有一个条件满足时就返回 1；所有条件都不满足时返回 0
+        self.Or = bt.Or(self.data>self.sma5, self.data>self.sma10, self.sma5>self.sma10)
+        # bt.If(a, b, c) 如果满足条件 a，就返回 b，否则返回 c
+        self.If = bt.If(self.data>self.sma5,1000, 5000)
+        # bt.All,同 bt.And
+        self.All = bt.All(self.data>self.sma5, self.data>self.sma10, self.sma5>self.sma10)
+        # bt.Any，同 bt.Or
+        self.Any = bt.Any(self.data>self.sma5, self.data>self.sma10, self.sma5>self.sma10)
+        # bt.Max，返回同一时刻所有指标中的最大值
+        self.Max = bt.Max(self.data, self.sma10, self.sma5)
+        # bt.Min，返回同一时刻所有指标中的最小值
+        self.Min = bt.Min(self.data, self.sma10, self.sma5)
+        # bt.Sum，对同一时刻所有指标进行求和
+        self.Sum = bt.Sum(self.data, self.sma10, self.sma5)
+        # bt.Cmp(a,b), 如果 a>b ，返回 1；否则返回 -1
+        self.Cmp = bt.Cmp(self.data, self.sma5)
+
         sma1 = btind.SimpleMovingAverage(self.data) ##簡單移動平均線
         ema1 = btind.ExponentialMovingAverage() ## 指數移動平均線
         close_over_sma = self.data.close > sma1
@@ -25,6 +46,11 @@ class QQStrategy(bt.Strategy):
     def next(self):
         if self.buy_sig:
             self.buy(size=100)
+            self.one_share += 1
+
+        if self.dataclose[0] < self.sma5 and self.one_share > 0:
+            self.sell(size=100)
+            self.one_share -= 1
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -269,7 +295,7 @@ class TestStrategy(bt.Strategy): ## 策略
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
         print(self.one_share)
 
-class SmaCross(bt.SignalStrategy): ## 均線交叉策略
+class SmaCross(bt.SignalStrategy): ## 均線交叉策略 怪怪
     def __init__(self):
         self._next_buy_date = datetime(2020, 1, 1) ##起始點
         self.one_share = 0
@@ -397,7 +423,7 @@ class Black_Triple_Start_Strategy(bt.Strategy): ## 策略 黑色三連星 連收
     def __init__(self):
         '''必选，初始化属性、计算指标等'''
         self._next_buy_date = datetime(2020, 1, 1)
-  
+        self.one_share = 0
     def next(self):
         '''必选，编写交易策略逻辑'''
         # 记录收盘价
@@ -411,6 +437,7 @@ class Black_Triple_Start_Strategy(bt.Strategy): ## 策略 黑色三連星 連收
                 # 买入
                 self.log('BUY, %.2f' % self.data.close[0])
                 self.buy(size=1000)
+                self.one_share += 1
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -466,6 +493,7 @@ class buy_sell_demo_Strategy(bt.Strategy): ## 策略 買入後 五個單位後�
         # 买入价格和手续费
         self.buyprice = None
         self.buycomm = None
+        self.one_share = 0
 
     def next(self):
         # 记录收盘价
@@ -485,6 +513,7 @@ class buy_sell_demo_Strategy(bt.Strategy): ## 策略 買入後 五個單位後�
                     self.log('买入单, %.2f' % self.dataclose[0])
                      # 跟踪订单避免重复
                     self.order = self.buy(size=1000)
+                    self.one_share += 1
         else:
             # 如果已经持仓，且当前交易数据量在买入后5个单位后
             if len(self) >= (self.bar_executed + 5):
@@ -492,6 +521,7 @@ class buy_sell_demo_Strategy(bt.Strategy): ## 策略 買入後 五個單位後�
                 self.log('卖出单, %.2f' % self.dataclose[0])
                 # 跟踪订单避免重复
                 self.order = self.sell(size=500)
+                self.one_share -= 0.5
 
     # 订单状态通知，买入卖出都是下单
     def notify_order(self, order):
@@ -562,6 +592,8 @@ class fifteenStrategy(bt.Strategy): ## 策略 15日均线交易
         # 买入价格和手续费
         self.buyprice = None
         self.buycomm = None
+
+        self.one_share = 0
         # 加入均线指标
         self.sma = bt.indicators.SimpleMovingAverage(self.datas[0], period=self.params.maperiod)
 
@@ -632,6 +664,7 @@ class fifteenStrategy(bt.Strategy): ## 策略 15日均线交易
                 self.log('买入单, %.2f' % self.dataclose[0])
                     # 跟踪订单避免重复
                 self.order = self.buy(size=500)
+                self.one_share += 0.5
         else:
             # 如果已经持仓，收盘价在均线价格之下
             if self.dataclose[0] < self.sma[0]:
@@ -639,95 +672,13 @@ class fifteenStrategy(bt.Strategy): ## 策略 15日均线交易
                 self.log('卖出单, %.2f' % self.dataclose[0])
                 # 跟踪订单避免重复
                 self.order = self.sell(size=500)
+                self.one_share -= 0.5
 
     def stop(self):
         self.roi = (self.broker.get_value() / self.start_cash) - 1.0
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
         # print(self.one_share)
     
-class K_80_20_buy_sell(bt.Strategy): ## 策略 K>80 sell K< 20 buy
-    def __init__(self):
-        self._next_buy_date = datetime(2020, 4, 5)
-        # 保存收盘价的引用
-        self.dataclose = self.datas[0].close
-        self.one_share = 0 #股票数量
-        self.start_cash = self.broker.get_cash()
-        # 9个交易日内最高价
-        self.high_nine = bt.indicators.Highest(self.data.high, period=9)
-        # 9个交易日内最低价
-        self.low_nine = bt.indicators.Lowest(self.data.low, period=9)
-        # 计算rsv值
-        self.rsv = 100 * bt.DivByZero(self.data_close - self.low_nine, self.high_nine - self.low_nine, zero=None)
-        # 计算rsv的3周期加权平均值，即K值
-        self.K = bt.indicators.EMA(self.rsv, period=3)
-        # D值=K值的3周期加权平均值
-        self.D = bt.indicators.EMA(self.K, period=3)
-        # J=3*K-2*D
-        self.J = 3 * self.K - 2 * self.D
-        # 跟踪挂单
-        self.order = None
-        # 买入价格和手续费
-        self.buyprice = None
-        self.buycomm = None
-  
-    def next(self):
-        if self.rsv <= 20:
-            self.log('BUY, %.2f' % self.data.close[0])
-            self.buy(size=1000) ## 台股
-            self.one_share += 1
-        elif self.rsv >= 80 and self.one_share > 0:
-            self.log('SELL, %.2f' % self.data.close[0])
-            self.sell(size=1000) ## 台股
-            self.one_share -= 1
-        elif self.rsv >= 80 and self.one_share == 0:
-            print(' ')
-
-    def notify_order(self, order):
-        if order.status in [order.Submitted, order.Accepted]:
-            # broker 提交/接受了，买/卖订单则什么都不做
-            return
-
-        # 检查一个订单是否完成
-        # 注意: 当资金不足时，broker会拒绝订单
-        if order.status in [order.Completed]:
-            if order.isbuy():
-                self.log(
-                    '已买入, 价格: %.2f, 费用: %.2f, 佣金 %.2f' %
-                    (order.executed.price,
-                     order.executed.value,
-                     order.executed.comm))
-
-                self.buyprice = order.executed.price
-                self.buycomm = order.executed.comm
-            elif order.issell():
-                self.log('已卖出, 价格: %.2f, 费用: %.2f, 佣金 %.2f' %
-                         (order.executed.price,
-                          order.executed.value,
-                          order.executed.comm))
-            # 记录当前交易数量
-            self.bar_executed = len(self)
-
-        elif order.status in [order.Canceled, order.Margin, order.Rejected]:
-            self.log('订单取消/保证金不足/拒绝')
-
-        # 其他状态记录为：无挂起订单
-        self.order = None
-
-    def notify_trade(self, trade):
-        if not trade.isclosed:
-            return
-        self.log('交易利润, 毛利润 %.2f, 净利润 %.2f' %
-                 (trade.pnl, trade.pnlcomm))
-
-    def log(self, txt, dt=None):
-        dt = dt or self.datas[0].datetime.date(0)
-        print('%s, %s' % (dt.isoformat(), txt))
-
-    def stop(self):
-        self.roi = (self.broker.get_value() / self.start_cash) - 1.0
-        print('ROI:        {:.2f}%'.format(100.0 * self.roi))
-        # print(self.one_share)
-        
 class MACD_buy_KDJ_sell(bt.Strategy): ## 策略 
     def __init__(self):
         self._next_buy_date = datetime(2020, 4, 5)
@@ -868,11 +819,11 @@ class MACD_glod_cross(bt.Strategy): ## MACD 黃金交叉
         if self.macd[0] > self.signal[0] and self.macd[-1] <= self.signal[-1]:
             self.log('BUY, %.2f' % self.data.close[0])
             self.buy(size=1000)
-            self.one_share += 1000
+            self.one_share += 1
         elif self.K >= 80 and self.one_share > 0:
             self.log('SELL, %.2f' % self.data.close[0])
             self.sell(size=1000)
-            self.one_share -= 1000
+            self.one_share -= 1
 
     def notify_order(self, order):
         if order.status in [order.Submitted, order.Accepted]:
@@ -966,11 +917,11 @@ class KD_glod_cross(bt.Strategy): ## KD 黃金交叉
             se = int((int(self.broker.get_cash()) / self.data.close[0]) / 2)
             # nornum = 1000
             self.buy(size=se)
-            self.one_share += se
+            self.one_share += 1
         elif self.rsi >= 80 and self.one_share > 0:
             self.log('SELL, %.2f' % self.data.close[0])
             self.sell(size=1000)
-            self.one_share -= 1000
+            self.one_share -= 1
         else:
             pass
 
@@ -1120,3 +1071,90 @@ class RSI_glod_cross(bt.Strategy): ## RSI 黃金交叉
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
         print(self.one_share)
 
+class K_80_20_buy_sell(bt.Strategy): ## 策略 K>80 sell K< 20 buy
+    def __init__(self):
+        self._next_buy_date = datetime(2020, 4, 5)
+        # 保存收盘价的引用
+        self.dataclose = self.datas[0].close
+        self.one_share = 0 #股票数量
+        self.start_cash = self.broker.get_cash()
+
+        self.sma5 = btind.SimpleMovingAverage(period=5) # 5日均线
+        self.sma10 = btind.SimpleMovingAverage(period=10) # 10日均线
+        self.sma10 = btind.SimpleMovingAverage(period=15) # 15日均线
+
+        # 9个交易日内最高价
+        self.high_nine = bt.indicators.Highest(self.data.high, period=9)
+        # 9个交易日内最低价
+        self.low_nine = bt.indicators.Lowest(self.data.low, period=9)
+        # 计算rsv值
+        self.rsv = 100 * bt.DivByZero(self.data_close - self.low_nine, self.high_nine - self.low_nine, zero=None)
+        # 计算rsv的3周期加权平均值，即K值
+        self.K = bt.indicators.EMA(self.rsv, period=3)
+        # D值=K值的3周期加权平均值
+        self.D = bt.indicators.EMA(self.K, period=3)
+        # J=3*K-2*D
+        self.J = 3 * self.K - 2 * self.D
+        # 跟踪挂单
+        self.order = None
+        # 买入价格和手续费
+        self.buyprice = None
+        self.buycomm = None
+  
+    def next(self):
+        if self.rsv <= 20:
+            self.log('BUY, %.2f' % self.data.close[0])
+            self.buy(size=1000) ## 台股
+            self.one_share += 1
+        elif self.rsv >= 80 and self.one_share > 0:
+            self.log('SELL, %.2f' % self.data.close[0])
+            self.sell(size=1000) ## 台股
+            self.one_share -= 1
+        elif self.rsv >= 80 and self.one_share == 0:
+            print(' ')
+
+    def notify_order(self, order):
+        if order.status in [order.Submitted, order.Accepted]:
+            # broker 提交/接受了，买/卖订单则什么都不做
+            return
+
+        # 检查一个订单是否完成
+        # 注意: 当资金不足时，broker会拒绝订单
+        if order.status in [order.Completed]:
+            if order.isbuy():
+                self.log(
+                    '已买入, 价格: %.2f, 费用: %.2f, 佣金 %.2f' %
+                    (order.executed.price,
+                     order.executed.value,
+                     order.executed.comm))
+
+                self.buyprice = order.executed.price
+                self.buycomm = order.executed.comm
+            elif order.issell():
+                self.log('已卖出, 价格: %.2f, 费用: %.2f, 佣金 %.2f' %
+                         (order.executed.price,
+                          order.executed.value,
+                          order.executed.comm))
+            # 记录当前交易数量
+            self.bar_executed = len(self)
+
+        elif order.status in [order.Canceled, order.Margin, order.Rejected]:
+            self.log('订单取消/保证金不足/拒绝')
+
+        # 其他状态记录为：无挂起订单
+        self.order = None
+
+    def notify_trade(self, trade):
+        if not trade.isclosed:
+            return
+        self.log('交易利润, 毛利润 %.2f, 净利润 %.2f' %
+                 (trade.pnl, trade.pnlcomm))
+
+    def log(self, txt, dt=None):
+        dt = dt or self.datas[0].datetime.date(0)
+        print('%s, %s' % (dt.isoformat(), txt))
+
+    def stop(self):
+        self.roi = (self.broker.get_value() / self.start_cash) - 1.0
+        print('ROI:        {:.2f}%'.format(100.0 * self.roi))
+        # print(self.one_share)

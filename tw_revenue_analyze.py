@@ -164,9 +164,9 @@ def backtrader_strategy(ar,year,month,strategy):
     
     cerebro.adddata(data0) ## 資料丟入模型
 
-    cerebro.run() ##analyzing data
-
-    cerebro.plot() ## draw picture plotname=f"{str(code)}.TW_{str(year)}-{str(month)}_{str(year)}-{str(month+2)}.png"
+    cerebro.run() ## analyzing data
+     
+    # cerebro.plot() ## draw picture plotname=f"{str(code)}.TW_{str(year)}-{str(month)}_{str(year)}-{str(month+2)}.png"
 
 year = int(sys.argv[1]) ## 明國西元年皆可
 month = str(sys.argv[2]) ## 月份 不要補0
@@ -197,5 +197,5 @@ else:
 
 for tmp_ar in ar:
 
-    backtrader_strategy(tmp_ar,int(year),int(month),QQStrategy) ##目標 年 月 策略(K_80_20_buy_sell)
-    exit('BS')
+    backtrader_strategy(tmp_ar,int(year),int(month),K_80_20_buy_sell) ##目標 年 月 策略(K_80_20_buy_sell)
+    # exit('BS')
