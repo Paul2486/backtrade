@@ -144,9 +144,9 @@ def backtrader_strategy(ar,year,month,strategy):
         month = month +4
 
     # exit(f"{year} {month}")
-    print(f"{year} {month}")
+    print(f"\n{year} {month}\n")
 
-    print(ar)
+    print(f"CODE:{ar}")
     code = ar
     # code = tmp_ar['code']
     # company_name = tmp_ar['公司名稱']
@@ -197,5 +197,5 @@ else:
 
 for tmp_ar in ar:
 
-    backtrader_strategy(tmp_ar,int(year),int(month),MACD_buy_KDJ_sell) ##目標 年 月 策略(K_80_20_buy_sell)
+    backtrader_strategy(tmp_ar,int(year),int(month),QQStrategy) ##目標 年 月 策略(K_80_20_buy_sell)
     exit('BS')

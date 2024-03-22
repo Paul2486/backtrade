@@ -1,8 +1,79 @@
 from ctypes.wintypes import SIZE
 import backtrader as bt
+import backtrader.indicators as btind ## 导入策略分析模块
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+
+class QQStrategy(bt.Strategy):
+  # 先在 __init__ 中提前算好指标
+    def __init__(self):
+        self._next_buy_date = datetime(2020, 1, 1) ## 起始日
+        # 保存收盘价的引用
+        self.dataclose = self.datas[0].close
+        self.one_share = 0 #股票数量
+        self.start_cash = self.broker.get_cash()
+
+        sma1 = btind.SimpleMovingAverage(self.data) ##簡單移動平均線
+        ema1 = btind.ExponentialMovingAverage() ## 指數移動平均線
+        close_over_sma = self.data.close > sma1
+        close_over_ema = self.data.close > ema1
+        sma_ema_diff = sma1 - ema1
+        # 生成交易信号
+        self.buy_sig = bt.And(close_over_sma, close_over_ema, sma_ema_diff > 0) ## 看起來就是字面意義
+    # 在 next 中直接调用计算好的指标
+    def next(self):
+        if self.buy_sig:
+            self.buy(size=100)
+
+    def notify_order(self, order):
+        if order.status in [order.Submitted, order.Accepted]:
+            # broker 提交/接受了，买/卖订单则什么都不做
+            return
+
+        # 检查一个订单是否完成
+        # 注意: 当资金不足时，broker会拒绝订单
+        if order.status in [order.Completed]:
+            if order.isbuy():
+                self.log(
+                    '已买入, 价格: %.2f, 張數: %.2f, 费用: %.2f, 佣金 %.2f' %
+                    (order.executed.price,
+                     order.executed.size,
+                     order.executed.value,
+                     order.executed.comm))
+
+                self.buyprice = order.executed.price
+                self.buycomm = order.executed.comm
+            elif order.issell():
+                self.log('已卖出, 价格: %.2f,, 張數: %.2f 费用: %.2f, 佣金 %.2f' %
+                         (order.executed.price,
+                          order.executed.size,
+                          order.executed.value,
+                          order.executed.comm))
+            # 记录当前交易数量
+            self.bar_executed = len(self)
+
+        elif order.status in [order.Canceled, order.Margin, order.Rejected]:
+            self.log('订单取消/保证金不足/拒绝')
+
+        # 其他状态记录为：无挂起订单
+        self.order = None
+
+    def notify_trade(self, trade):
+        if not trade.isclosed:
+            return
+        self.log('交易利润, 毛利润 %.2f, 净利润 %.2f' %
+                 (trade.pnl, trade.pnlcomm))
+        self.log(f'目前現金 {int(self.broker.get_cash())}')
+        
+    def log(self, txt, dt=None):
+        dt = dt or self.datas[0].datetime.date(0)
+        print('%s, %s' % (dt.isoformat(), txt))
+
+    def stop(self):
+        self.roi = (self.broker.get_value() / self.start_cash) - 1.0
+        print('ROI:        {:.2f}%'.format(100.0 * self.roi))
+        print(self.one_share)
 
 class DEMO(bt.Strategy): ## 新策略 copy 這邊過去 撰寫策略
     def __init__(self):
