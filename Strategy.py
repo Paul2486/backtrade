@@ -1217,3 +1217,87 @@ class PeriodicInvestmentStrategy(bt.Strategy):## 策略 每月固定日期購買
         self.roi = ((self.broker.get_value()+self.broker.get_cash()) / self.start_cash) - 1.0
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
         print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()))
+
+class PeriodicInvestmentStrategy_K_20_sell(bt.Strategy):## 策略 每月固定日期購買
+    params = (
+        ('investment_amount', 1000),  # 每期投資股數
+        ('printlog', True),  # 是否打印交易日志
+    )
+
+    def __init__(self):
+        # 保存收盘价的引用
+        self.dataclose = self.datas[0].close
+        self.one_share = 0 #股票数量
+        self.start_cash = self.broker.get_cash()
+
+        # self.sma5 = btind.SimpleMovingAverage(period=5) # 5日均线
+
+        # 9个交易日内最高价
+        self.high_nine = bt.indicators.Highest(self.data.high, period=9)
+        # 9个交易日内最低价
+        self.low_nine = bt.indicators.Lowest(self.data.low, period=9)
+        # 计算rsv值
+        self.rsv = 100 * bt.DivByZero(self.data_close - self.low_nine, self.high_nine - self.low_nine, zero=None)
+        # 计算rsv的3周期加权平均值，即K值
+        self.K = bt.indicators.EMA(self.rsv, period=3)
+        # D值=K值的3周期加权平均值
+        self.D = bt.indicators.EMA(self.K, period=3)
+        # J=3*K-2*D
+        self.J = 3 * self.K - 2 * self.D
+        self.order = None
+        self.add_timer(
+            when=bt.Timer.SESSION_START,
+            monthdays=[4,14],  # 每月的第一天 隔天買入
+            monthcarry=True,  # 如果第一天不是交易日，則延至下一個交易日
+        )
+
+    def next(self):
+        pass
+        # if self.rsv >= 80 and self.one_share > 0:
+        #     self.log('SELL, %.2f' % self.data.close[0])
+        #     self.sell(size=self.params.investment_amount) ## 台股
+            
+        # elif self.rsv >= 80 and self.one_share == 0:
+        #     print(' ')
+
+    def notify_timer(self, timer, when, *args, **kwargs):
+        self.log('進行定期投資')
+        self.order = self.buy(size=self.params.investment_amount)
+
+    def notify_order(self, order):
+        if order.status in [order.Completed]:
+            if order.isbuy():
+                self.log('買入執行, 價格: %.2f, 成本: %.2f, 手續費: %.2f' %
+                         (order.executed.price,
+                          order.executed.value,
+                          order.executed.comm))
+                self.one_share +=1
+
+            elif order.issell():
+                self.log('賣出執行, 價格: %.2f, 成本: %.2f, 手續費: %.2f' %
+                         (order.executed.price,
+                          order.executed.value,
+                          order.executed.comm))
+                self.one_share -=1
+            
+            self.bar_executed = len(self)
+
+        elif order.status in [order.Canceled, order.Margin, order.Rejected]:
+            self.log('訂單 取消/保證金不足/拒絕')
+
+        self.order = None
+
+    def notify_trade(self, trade):
+        if not trade.isclosed:
+            return
+        self.log('交易利润, 毛利润 %.2f, 净利润 %.2f' %
+                 (trade.pnl, trade.pnlcomm))
+
+    def log(self, txt, dt=None):
+        dt = dt or self.datas[0].datetime.date(0)
+        print('%s, %s' % (dt.isoformat(), txt))
+
+    def stop(self):
+        self.roi = ((self.broker.get_value()+self.broker.get_cash()) / self.start_cash) - 1.0
+        print('ROI:        {:.2f}%'.format(100.0 * self.roi))
+        print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()))
