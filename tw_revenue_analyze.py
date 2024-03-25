@@ -16,7 +16,7 @@ from Strategy import *
 #            Emma
 
 # @cache
-def analyze_report(year, month):
+def analyze_report(year, month,oos):
     gc.enable()
     if year > 1990:
         year -= 1911
@@ -26,8 +26,10 @@ def analyze_report(year, month):
     for base in range(0,lr): # 6 9 12
         imonth = int(month) + base
         print(imonth)
-        dfs = pd.read_csv(f"TW_revenue\\tmp_tw_revenue_{year}_{str(imonth)}.csv",index_col=None)
-
+        if oos == 'win32':
+            dfs = pd.read_csv(f"TW_revenue\\tmp_tw_revenue_{year}_{str(imonth)}.csv",index_col=None)
+        elif oos == 'linux':
+            dfs = pd.read_csv(f"TW_revenue/tmp_tw_revenue_{year}_{str(imonth)}.csv",index_col=None)
         # pd.set_option('display.max_columns', None)#显示所有列
         # pd.set_option('display.max_rows', None)#显示所有行
         dfm.append(dfs)
@@ -106,7 +108,7 @@ def get_code_industry_info(d_code,d_name):
     # exit("CIT")
     return r_tmp_v2
 
-def dowmload_code_data(year,code):
+def dowmload_code_data(year,code,oos):
     try:
         target = str(code)+'.TW'
         print(target)
@@ -122,22 +124,30 @@ def dowmload_code_data(year,code):
     # print(os.path.dirname(os.path.abspath(__file__)))
     loc = os.path.dirname(os.path.abspath(__file__))
 
-    if os.path.isdir(str(loc) + '\\'+fodel):
-        # print("目錄存在。")
-        pass
-    else:
-        os.mkdir(str(loc) + '\\'+fodel)
+    if oos == 'win32':
+        if os.path.isdir(str(loc) + '\\'+fodel):
+            pass
+        else:
+            os.mkdir(str(loc) + '\\'+fodel)
+        
+        ph = str(loc) + '\\'+fodel+'\\' + str(target)+'_'+ sd +'_'+ ed +'.csv' ## Path
+
+        print(ph)
+    elif oos == 'linux':
+        if os.path.isdir(str(loc) + '/'+fodel):
+            pass
+        else:
+            os.mkdir(str(loc) + '/'+fodel)
+        
+        ph = str(loc) + '/'+fodel+'/' + str(target)+'_'+ sd +'_'+ ed +'.csv' ## Path
+
+        print(ph)
     
-    # ph = str(loc) + '\\'+fodel+'\\' + str(target) + '.csv' ## Path
-    ph = str(loc) + '\\'+fodel+'\\' + str(target)+'_'+ sd +'_'+ ed +'.csv' ## Path
-
-    print(ph)
-
     # exit()
     data.to_csv(ph, index=True, header = True)
     time.sleep(10)
 
-def backtrader_strategy(ar,year,month,strategy):
+def backtrader_strategy(ar,year,month,strategy,oos):
     
     base_bt = datetime.strptime(f'{year}-{month}', "%Y-%m")
     start_year,start_month = (base_bt + timedelta(days=92)).strftime("%Y-%m").split('-')
@@ -148,9 +158,10 @@ def backtrader_strategy(ar,year,month,strategy):
     # code = tmp_ar['code']
     # company_name = tmp_ar['公司名稱']
     # note = tmp_ar['備註']
-
-    datasource = f'{code}\\{code}.TW_{year}-01-01_{year}-12-31.csv'
-
+    if oos == 'win32':
+        datasource = f'{code}\\{code}.TW_{year}-01-01_{year}-12-31.csv'
+    elif oos == 'linux':
+        datasource = f'{code}/{code}.TW_{year}-01-01_{year}-12-31.csv'
     cerebro = bt.Cerebro()
     cerebro.broker.setcash(100000.0) ## 初始資金 Initial funding 
 
@@ -166,33 +177,41 @@ def backtrader_strategy(ar,year,month,strategy):
 
     cerebro.run() ## analyzing data
      
-    # cerebro.plot() ## draw picture plotname=f"{str(code)}.TW_{str(year)}-{str(month)}_{str(year)}-{str(month+2)}.png"
+    # cerebro.plot() ## draw picture
 
 year = int(sys.argv[1]) ## 明國西元年皆可
 month = str(sys.argv[2]) ## 月份 不要補0
 
+oos = sys.platform ## win32 linux
 # backtrader_strategy('1104',int(year),int(month),K_80_20_buy_sell) ##目標 年 月 策略(K_80_20_buy_sell)
 
 # dl = False
 dl = True
 
-ar = analyze_report(year, month)
+ar = analyze_report(year, month,oos)
 print("\n\n Enter Backtrader Analyze")
 if dl == True:
     if int(month) +6 > 12:
         tmp_year = int(year) +1
         print(f"**{year}**")
     else:
-        pass
+        tmp_year = int(year)
 
     for tmp_ar in ar:
         print(tmp_ar)
         
-        if os.path.isfile(f"{tmp_ar}\\{tmp_ar}.TW_{tmp_year}-01-01_{tmp_year}-12-31.csv"):
-            pass
-        else:
-            dowmload_code_data(tmp_year,tmp_ar)
-        # exit("Pause")
+        if oos == 'win32':
+            if os.path.isfile(f"{tmp_ar}\\{tmp_ar}.TW_{tmp_year}-01-01_{tmp_year}-12-31.csv"):
+                pass
+            else:
+                dowmload_code_data(tmp_year,tmp_ar,oos)
+            # exit("Pause")
+        elif oos == 'linux':
+            if os.path.isfile(f"{tmp_ar}/{tmp_ar}.TW_{tmp_year}-01-01_{tmp_year}-12-31.csv"):
+                pass
+            else:
+                dowmload_code_data(tmp_year,tmp_ar,oos)
+            # exit("Pause")
 else:
     pass
 
@@ -202,5 +221,5 @@ else:
 
 for tmp_ar in ar:
 
-    backtrader_strategy(tmp_ar,int(year),int(month),K_80_20_buy_sell) ##目標 年 月 策略(K_80_20_buy_sell)
+    backtrader_strategy(tmp_ar,int(year),int(month),PeriodicInvestmentStrategy,oos) ##目標 年 月 策略(K_80_20_buy_sell)
     # exit('BS')
