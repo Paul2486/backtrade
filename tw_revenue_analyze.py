@@ -159,9 +159,17 @@ def backtrader_strategy(ar,year,month,strategy,oos):
     # company_name = tmp_ar['公司名稱']
     # note = tmp_ar['備註']
     if oos == 'win32':
-        datasource = f'{code}\\{code}.TW_{year}-01-01_{year}-12-31.csv'
+        try:
+            datasource = f'{code}\\{code}.TW_{year}-01-01_{year}-12-31.csv'
+        except:
+            dowmload_code_data(year,{},oos)
+            datasource = f'{code}\\{code}.TW_{year}-01-01_{year}-12-31.csv'
     elif oos == 'linux':
-        datasource = f'{code}/{code}.TW_{year}-01-01_{year}-12-31.csv'
+        try:
+            datasource = f'{code}/{code}.TW_{year}-01-01_{year}-12-31.csv'
+        except:
+            dowmload_code_data(year,{code},oos)
+            datasource = f'{code}/{code}.TW_{year}-01-01_{year}-12-31.csv'
     cerebro = bt.Cerebro()
     cerebro.broker.setcash(100000.0) ## 初始資金 Initial funding 
 
@@ -183,8 +191,9 @@ year = int(sys.argv[1]) ## 明國西元年皆可
 month = str(sys.argv[2]) ## 月份 不要補0
 
 oos = sys.platform ## win32 linux
-# backtrader_strategy('1104',int(year),int(month),K_80_20_buy_sell) ##目標 年 月 策略(K_80_20_buy_sell)
-
+# backtrader_strategy('1612',int(year),int(month),PeriodicInvestmentStrategy_K_20_sell,oos) ##目標 年 月 策略(K_80_20_buy_sell)
+# dowmload_code_data(year,'1612',oos)
+# exit()
 # dl = False
 dl = True
 
@@ -221,5 +230,5 @@ else:
 
 for tmp_ar in ar:
 
-    backtrader_strategy(tmp_ar,int(year),int(month),PeriodicInvestmentStrategy,oos) ##目標 年 月 策略(K_80_20_buy_sell)
+    backtrader_strategy(tmp_ar,int(year),int(month),PeriodicInvestmentStrategy_K_20_sell,oos) ##目標 年 月 策略(K_80_20_buy_sell)
     # exit('BS')

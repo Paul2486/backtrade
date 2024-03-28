@@ -98,7 +98,7 @@ class QQStrategy(bt.Strategy):
         print('%s, %s' % (dt.isoformat(), txt))
 
     def stop(self):
-        self.roi = ((self.broker.get_value()+self.broker.get_cash()) / self.start_cash) - 1.0
+        self.roi = (self.broker.get_value() / self.start_cash) - 1.0
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
         print(self.one_share)
 
@@ -191,8 +191,9 @@ class DEMO(bt.Strategy): ## 新策略 copy 這邊過去 撰寫策略
         print('%s, %s' % (dt.isoformat(), txt))
 
     def stop(self):
-        self.roi = ((self.broker.get_value()+self.broker.get_cash()) / self.start_cash) - 1.0
+        self.roi = (self.broker.get_value() / self.start_cash) - 1.0
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
+        print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()-self.broker.get_cash()))
         print(self.one_share)
 
 class TestStrategy(bt.Strategy): ## 策略
@@ -293,9 +294,10 @@ class TestStrategy(bt.Strategy): ## 策略
     
     def stop(self):
         # calculate the actual returns
-        self.roi = ((self.broker.get_value()+self.broker.get_cash()) / self.start_cash) - 1.0
+        self.roi = (self.broker.get_value() / self.start_cash) - 1.0
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
-        print(self.one_share)
+        print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()-self.broker.get_cash()))
+
 
 class SmaCross(bt.SignalStrategy): ## 均線交叉策略 怪怪
     def __init__(self):
@@ -351,7 +353,7 @@ class SmaCross(bt.SignalStrategy): ## 均線交叉策略 怪怪
 
     def stop(self):
         # calculate the actual returns
-        self.roi = ((self.broker.get_value()+self.broker.get_cash()) / self.start_cash) - 1.0
+        self.roi = (self.broker.get_value() / self.start_cash) - 1.0
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
         print(f'{self.one_share}')
 
@@ -418,7 +420,7 @@ class every_mon_five_buy_Strategy(bt.Strategy): ## 策略 每月五號買入
     
     def stop(self):
         # calculate the actual returns
-        self.roi = ((self.broker.get_value()+self.broker.get_cash()) / self.start_cash) - 1.0
+        self.roi = (self.broker.get_value() / self.start_cash) - 1.0
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
         print(f'{self.one_share}')
 
@@ -571,7 +573,7 @@ class buy_sell_demo_Strategy(bt.Strategy): ## 策略 買入後 五個單位後�
         print('%s, %s' % (dt.isoformat(), txt))
 
     def stop(self):
-        self.roi = ((self.broker.get_value()+self.broker.get_cash()) / self.start_cash) - 1.0
+        self.roi = (self.broker.get_value() / self.start_cash) - 1.0
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
         # print(self.one_share)
 
@@ -676,7 +678,7 @@ class fifteenStrategy(bt.Strategy): ## 策略 15日均线交易
                 self.order = self.sell(size=500)
 
     def stop(self):
-        self.roi = ((self.broker.get_value()+self.broker.get_cash()) / self.start_cash) - 1.0
+        self.roi = (self.broker.get_value() / self.start_cash) - 1.0
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
         # print(self.one_share)
     
@@ -775,9 +777,9 @@ class MACD_buy_KDJ_sell(bt.Strategy): ## 策略
         print('%s, %s' % (dt.isoformat(), txt))
 
     def stop(self):
-        self.roi = ((self.broker.get_value()+self.broker.get_cash()) / self.start_cash) - 1.0
+        self.roi = (self.broker.get_value() / self.start_cash) - 1.0
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
-        # print(self.one_share)
+        print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()-self.broker.get_cash()))
 
 class MACD_glod_cross(bt.Strategy): ## MACD 黃金交叉
 
@@ -868,9 +870,9 @@ class MACD_glod_cross(bt.Strategy): ## MACD 黃金交叉
         print('%s, %s' % (dt.isoformat(), txt))
 
     def stop(self):
-        self.roi = ((self.broker.get_value()+self.broker.get_cash()) / self.start_cash) - 1.0
+        self.roi = (self.broker.get_value() / self.start_cash) - 1.0
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
-        print(self.one_share)
+        print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()-self.broker.get_cash()))
 
 class KD_glod_cross(bt.Strategy): ## KD 黃金交叉
     def __init__(self):
@@ -968,10 +970,9 @@ class KD_glod_cross(bt.Strategy): ## KD 黃金交叉
         print('%s, %s' % (dt.isoformat(), txt))
 
     def stop(self):
-        self.roi = ((self.broker.get_value()+self.broker.get_cash()) / self.start_cash) - 1.0
+        self.roi = (self.broker.get_value() / self.start_cash) - 1.0
         print('ROI:    {:.2f}%'.format(100.0 * self.roi))
-        # print(f'股票價值 {(self.one_share) * self.data.close[0]}')
-        print(f'剩餘現金 {int(self.broker.get_cash())}')
+        print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()-self.broker.get_cash()))
 
 class RSI_glod_cross(bt.Strategy): ## RSI 黃金交叉
     def __init__(self):
@@ -1066,9 +1067,9 @@ class RSI_glod_cross(bt.Strategy): ## RSI 黃金交叉
         print('%s, %s' % (dt.isoformat(), txt))
 
     def stop(self):
-        self.roi = ((self.broker.get_value()+self.broker.get_cash()) / self.start_cash) - 1.0
+        self.roi = (self.broker.get_value() / self.start_cash) - 1.0
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
-        print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()))
+        print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()-self.broker.get_cash()))
 
 class K_80_20_buy_sell(bt.Strategy): ## 策略 K>80 sell K< 20 buy
     def __init__(self):
@@ -1155,9 +1156,9 @@ class K_80_20_buy_sell(bt.Strategy): ## 策略 K>80 sell K< 20 buy
         print('%s, %s' % (dt.isoformat(), txt))
 
     def stop(self):
-        self.roi = ((self.broker.get_value()+self.broker.get_cash()) / self.start_cash) - 1.0
+        self.roi = (self.broker.get_value() / self.start_cash) - 1.0
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
-        print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()))
+        print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()-self.broker.get_cash()))
         # print(self.one_share)
 
 class PeriodicInvestmentStrategy(bt.Strategy):## 策略 每月固定日期購買
@@ -1214,9 +1215,9 @@ class PeriodicInvestmentStrategy(bt.Strategy):## 策略 每月固定日期購買
         print('%s, %s' % (dt.isoformat(), txt))
 
     def stop(self):
-        self.roi = ((self.broker.get_value()+self.broker.get_cash()) / self.start_cash) - 1.0
+        self.roi = (self.broker.get_value() / self.start_cash) - 1.0
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
-        print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()))
+        print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()-self.broker.get_cash()))
 
 class PeriodicInvestmentStrategy_K_20_sell(bt.Strategy):## 策略 每月固定日期購買
     params = (
@@ -1247,9 +1248,10 @@ class PeriodicInvestmentStrategy_K_20_sell(bt.Strategy):## 策略 每月固定�
         self.order = None
         self.add_timer(
             when=bt.Timer.SESSION_START,
-            monthdays=[4,14],  # 每月的第一天 隔天買入
+            monthdays=[14],  # 每月的第一天 隔天買入
             monthcarry=True,  # 如果第一天不是交易日，則延至下一個交易日
         )
+        print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()-self.broker.get_cash()))
 
     def next(self):
         pass
@@ -1298,6 +1300,6 @@ class PeriodicInvestmentStrategy_K_20_sell(bt.Strategy):## 策略 每月固定�
         print('%s, %s' % (dt.isoformat(), txt))
 
     def stop(self):
-        self.roi = ((self.broker.get_value()+self.broker.get_cash()) / self.start_cash) - 1.0
+        self.roi = (self.broker.get_value() / self.start_cash) - 1.0
         print('ROI:        {:.2f}%'.format(100.0 * self.roi))
-        print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()))
+        print('Cash: {:.2f}, Stock Value:{:.2f}'.format(self.broker.get_cash() ,self.broker.get_value()-self.broker.get_cash()))
